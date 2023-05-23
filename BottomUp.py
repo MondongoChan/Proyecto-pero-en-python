@@ -251,11 +251,12 @@ def main():
     tabla = generar_estados(gramatica, diccionario_follow)
 
     print(tabla['action'])
+    
     for i in range(len(tabla['action'])):
         for j in range(len(tabla['action'][0])):
             print(tabla['action'][i][j].ljust(5), end=' | ')
         print()
-    print('\ngoto')
+    print('\ngoto') 
     for i in range(len(tabla['goto'])):
         for j in range(len(tabla['goto'][0])):
             print(tabla['goto'][i][j].ljust(5), end=' | ')

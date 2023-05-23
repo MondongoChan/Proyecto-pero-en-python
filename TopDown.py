@@ -1,3 +1,6 @@
+from collections import deque
+
+
 def almacenar_gramatica():
     producciones = {}
 
@@ -19,9 +22,6 @@ def almacenar_gramatica():
                                          for prod in producciones_texto]
 
     return producciones
-def calFirstprod(prod, first):
-    iterador = 0
-    first_product = set()
 
 def calFirstprod(prod, first):
     iterador = 0
@@ -159,22 +159,40 @@ def create_parsing_table(grammar, flw, first_product):
                 # Símbolo terminal en la primera posición de la producción
                 terminal_index = parsing_table[0].index(first_symbol)
                 for follow_symbol in flw[non_terminal]:
-                    parsing_table[non_terminals.index(non_terminal) + 1][terminal_index] = production
+                    if(parsing_table[non_terminals.index(non_terminal) + 1][terminal_index] == "00"):
+                        parsing_table[non_terminals.index(non_terminal) + 1][terminal_index] = production
+                    else:
+                        print("no es ll1")
+                        break   
             elif first_symbol.isupper():
                 # Símbolo no terminal en la primera posición de la producción
                 for symbol in first_product[production]:
                     if symbol != '0':
                         terminal_index = parsing_table[0].index(symbol)
-                        parsing_table[non_terminals.index(non_terminal) + 1][terminal_index] = production
+                        if(parsing_table[non_terminals.index(non_terminal) + 1][terminal_index] == "00"):
+                            parsing_table[non_terminals.index(non_terminal) + 1][terminal_index] = production
+                        else:
+                            print("no es ll1")
+                            break       
             else:
                 for follow_symbol in flw[non_terminal]:
                     terminal_index = parsing_table[0].index(follow_symbol)
-                    parsing_table[non_terminals.index(non_terminal) + 1][terminal_index] = production
+                    if(parsing_table[non_terminals.index(non_terminal) + 1][terminal_index] == "00"):
+                        parsing_table[non_terminals.index(non_terminal) + 1][terminal_index] = production
+                    else:
+                        print("no es ll1")
+                        break           
                     if '$' in flw[non_terminal]:
                         terminal_index = parsing_table[0].index('$')
-                        parsing_table[non_terminals.index(non_terminal) + 1][terminal_index] = '$'       
+                        if(parsing_table[non_terminals.index(non_terminal) + 1][terminal_index] == "00"):
+                            parsing_table[non_terminals.index(non_terminal) + 1][terminal_index] = '$'
+                        else:
+                            print("no es ll1")
+                            break            
     return parsing_table
-    
+ 
+
+
 # Ejemplo de uso
 gramatica = almacenar_gramatica()
 firstprod = {}
