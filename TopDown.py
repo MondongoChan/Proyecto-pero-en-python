@@ -114,19 +114,17 @@ def follow(flw, first, symbol, grammar):
                     first_next = set()
                     for next_symbol in production[pos+1:]:
                         if next_symbol.isupper():
-                            fst_next = first[next_symbol]
-                            first_next = first_next.union(first[next_symbol] - {'0'})
+                          
+                            first_next = first_next.union(first[next_symbol])
                             if '0' not in first[next_symbol]:
                                 break
                         else:
                             first_next.add(next_symbol)
-                            break
-                    else:
-                        fst_next = set()  # Inicializar fst_next en caso de no haber encontrado un no terminal
+                            break# Inicializar fst_next en caso de no haber encontrado un no terminal
                     if '0' in first_next:
                         if production != symbol:
                             flw[symbol] = flw[symbol].union(follow(flw, first, production, grammar))
-                            flw[symbol] = flw[symbol].union(first_next) - {'0'}
+                            flw[symbol] = flw[symbol].union(first_next)
                     else:
                         flw[symbol] = flw[symbol].union(first_next)
     return flw[symbol]
@@ -140,7 +138,7 @@ def create_parsing_table(grammar, flw, first_product):
     for productions in grammar.values():
         for production in productions:
             for symbol in production:
-                if not(symbol.isupper()) and symbol != '0':
+                if not (symbol.isupper()) and symbol != '0':
                     terminals.add(symbol)
     for terminal in terminals:
         parsing_table[0].insert(-1, terminal)
@@ -150,48 +148,79 @@ def create_parsing_table(grammar, flw, first_product):
         if non_terminal != '0':
             row[0] = non_terminal
         parsing_table.append(row)
-        
 
     for non_terminal, productions in grammar.items():
         for production in productions:
-            first_symbol = production[0]
-            if not first_symbol.isupper() and first_symbol != '0':
-                # Símbolo terminal en la primera posición de la producción
-                terminal_index = parsing_table[0].index(first_symbol)
-                for follow_symbol in flw[non_terminal]:
-                    if(parsing_table[non_terminals.index(non_terminal) + 1][terminal_index] == "00"):
+            for symbol in first_product[production]:
+                if not symbol.isupper() and symbol != '0':
+                    # Símbolo terminal en el FIRST de la producción
+                    terminal_index = parsing_table[0].index(symbol)
+                    if parsing_table[non_terminals.index(non_terminal) + 1][terminal_index] == "00":
                         parsing_table[non_terminals.index(non_terminal) + 1][terminal_index] = production
                     else:
-                        print("no es ll1")
-                        break   
-            elif first_symbol.isupper():
-                # Símbolo no terminal en la primera posición de la producción
-                for symbol in first_product[production]:
-                    if symbol != '0':
-                        terminal_index = parsing_table[0].index(symbol)
-                        if(parsing_table[non_terminals.index(non_terminal) + 1][terminal_index] == "00"):
+                        print("No es LL(1)")
+                        break
+                elif symbol.isupper():
+                    # Símbolo no terminal en el FIRST de la producción
+                    for follow_symbol in flw[symbol]:
+                        if follow_symbol != '0':
+                            terminal_index = parsing_table[0].index(follow_symbol)
+                            if parsing_table[non_terminals.index(non_terminal) + 1][terminal_index] == "00":
+                                parsing_table[non_terminals.index(non_terminal) + 1][terminal_index] = production
+                            else:
+                                print("No es LL(1)")
+                                break
+                else:
+                    # '0' en el FIRST de la producción
+                    for follow_symbol in flw[non_terminal]:
+                        if (follow_symbol != '0'):
+                            terminal_index = parsing_table[0].index(follow_symbol)
+                        if parsing_table[non_terminals.index(non_terminal) + 1][terminal_index] == "00":
                             parsing_table[non_terminals.index(non_terminal) + 1][terminal_index] = production
                         else:
-                            print("no es ll1")
-                            break       
-            else:
-                for follow_symbol in flw[non_terminal]:
-                    terminal_index = parsing_table[0].index(follow_symbol)
-                    if(parsing_table[non_terminals.index(non_terminal) + 1][terminal_index] == "00"):
-                        parsing_table[non_terminals.index(non_terminal) + 1][terminal_index] = production
-                    else:
-                        print("no es ll1")
-                        break           
+                            print("No es LL(1)")
+                            break
                     if '$' in flw[non_terminal]:
                         terminal_index = parsing_table[0].index('$')
-                        if(parsing_table[non_terminals.index(non_terminal) + 1][terminal_index] == "00"):
-                            parsing_table[non_terminals.index(non_terminal) + 1][terminal_index] = '$'
-                        else:
-                            print("no es ll1")
-                            break            
+                        parsing_table[non_terminals.index(non_terminal) + 1][terminal_index] = '$'
+
     return parsing_table
  
+def prediccion(cadena, tabla):
+    stack = ['$']
+    stack.append(list(tabla[0])[0])  # Obtiene el primer no terminal de la primera fila de la tabla
+    cadena += '$'
+    index = 0
 
+    while stack[-1] != '$':
+        X = stack[-1]  # Top stack symbol
+        a = cadena[index]  # Current input symbol
+        print(X)
+        if X == a:
+            print("a")
+            stack.pop()
+            index += 1
+            print(tabla[0])
+        elif X in tabla[0]:
+            print(tabla[0])
+            return False  # Error: X is a terminal symbol
+        else:
+            column_index = tabla[0].index(a)  # Obtiene el índice de la columna para 'a'
+            column = [row[column_index] for row in tabla]  # Obtiene la columna correspondiente a 'a'
+            
+            if tabla[column.index(X)][column_index] == "0":
+                return False
+            else:
+                stack.pop()
+                production = tabla[column.index(X)][column_index]  # Obtiene la producción de la tabla
+                stack.extend(reversed(production))
+
+    if index == len(cadena) - 1:
+        return True  # Input string is valid
+    else:
+        print("siempre por acá")
+        return False
+            
 
 # Ejemplo de uso
 gramatica = almacenar_gramatica()
@@ -224,3 +253,9 @@ for fila in matriz:
     for elemento in fila:
         print(elemento, end=' ')
     print()
+    
+while True:
+    a = input()
+    if a == '-1':
+        break
+    print(prediccion(a, matriz ))
